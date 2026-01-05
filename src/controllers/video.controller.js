@@ -146,10 +146,47 @@ const updateVideoThumbnail = asyncHandler(async(req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: delete video
+
+    const video = await Video.findByIdAndDelete(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Video deleted successflly!"
+        )
+    )
+    
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "Video not found!")
+    }
+
+    video.isPublished = !video.isPublished
+    await video.save({ validatebeforeSave: false })
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {isPublished: video.isPublished},
+            "Operation is successfully done!"
+        )
+    )
+
 })
 
 export {
