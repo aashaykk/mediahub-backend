@@ -54,7 +54,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
     )
 })
 
-
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: get video by id
@@ -77,9 +76,70 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 })
 
-const updateVideo = asyncHandler(async (req, res) => {
+const updateVideoDetails = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    const {title, description} = req.body
+
+    if (!title || !description) {
+        throw new ApiError(400, "All fields are required!")
+    }
     //TODO: update video details like title, description, thumbnail
+
+    const video = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                title,
+                description
+            }
+        },
+        {new : true}
+    )
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video details updated successfully"))
+
+    
+})
+
+const updateVideoThumbnail = asyncHandler(async(req, res) => {
+    const { videoId } = req.params
+    const thumbnailLocalPath = req.file?.path
+
+    if(!thumbnailLocalPath) {
+        throw new ApiError(400, "Thumbnail File is missing")
+    }
+
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+
+    if (!thumbnail.url) {
+        throw new ApiError(400, "Error while uploading thumbnail")
+    }
+
+    const video = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                thumbnail: thumbnail.url,
+            }
+        },
+        {new : true}
+    )
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {video}, "Thumbnail Updated Successfully")
+        )
 
 })
 
@@ -96,7 +156,8 @@ export {
     getAllVideos,
     publishAVideo,
     getVideoById,
-    updateVideo,
+    updateVideoDetails,
+    updateVideoThumbnail,
     deleteVideo,
     togglePublishStatus
 }
