@@ -12,7 +12,7 @@ A production-ready backend API for a social content platform featuring videos, p
 ## Tech Stack
 Node.js, Express.js, MongoDB, Mongoose, JWT, bcrypt
 
-## ▶️ Run Locally
+## Run Locally
 ```bash
 git clone https://github.com/your-username/mediahub-backend.git
 cd mediahub-backend
