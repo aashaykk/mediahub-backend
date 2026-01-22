@@ -10,6 +10,53 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     const {page = 1, limit = 10} = req.query
 
+    
+    if(!videoId) {
+        throw new ApiError(400, "Video Id is required")
+    }
+    
+    page = Number(page)
+    limit = Number(limit)
+
+    if(isNaN(page) || page < 1) {
+        page = 1
+    }
+
+    if(isNaN(limit) || limit < 1) {
+        limit = 10
+    }
+
+    const skip = (page - 1)*limit
+
+    const comments = await Comment.find({ video: videoId })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+
+    if(!comments) {
+        throw new ApiError(404, "Comments not found")
+    }
+    
+    const totalComments = await Comment.countDocuments({ video: videoId })
+
+    const totalPages = Math.ceil(totalComments / limit);
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                comments,
+                currentPage: page,
+                totalPages,
+                totalComments
+            },
+            "Comments fetched successfully"
+        )
+    )
+
+
 })
 
 const addComment = asyncHandler(async (req, res) => {
