@@ -3,6 +3,7 @@ import {Playlist} from "../models/playlist.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
+import {Video} from "../models/video.model.js"
 import { User } from "../models/user.model.js"
 
 
@@ -124,19 +125,132 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const {playlistId, videoId} = req.params
+    const userId = req.user._id
     // TODO: remove video from playlist
+    if (
+        !mongoose.Types.ObjectId.isValid(playlistId) ||
+        !mongoose.Types.ObjectId.isValid(videoId)
+    ) {
+        throw new ApiError(400, "Invalid playlist or video id")
+    }
+
+    const playlist = await Playlist.findById(playlistId)
+
+    if (!playlist) {
+        throw new ApiError(404, "Playlist not found")
+    }
+
+    if (playlist.owner.toString() !== userId.toString()) {
+        throw new ApiError(403, "You are not allowed to modify this playlist")
+    }
+
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new ApiError(404, "Video not found")
+    }
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $pull: { videos: videoId }
+        },
+        { new: true }
+    )
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            updatedPlaylist,
+            "Video removed from playlist successfully"
+        )
+    )
 
 })
 
 const deletePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
     // TODO: delete playlist
+    const userId = req.user._id
+    if (
+        !mongoose.Types.ObjectId.isValid(playlistId)
+    ) {
+        throw new ApiError(400, "Invalid playlist id")
+    }
+
+    const playlist = await Playlist.findById(playlistId)
+
+    if(!playlist) {
+        throw new ApiError(404, "Playlist not found")
+    }
+
+    if (playlist.owner.toString() !== userId.toString()) {
+        throw new ApiError(403, "You are not allowed to modify this playlist")
+    }
+
+    await Playlist.findByIdAndDelete(playlistId)
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Playlist deleted successfully"
+        )
+    )
+
+
+
 })
 
 const updatePlaylist = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
     const {name, description} = req.body
+    const userId = req.user._id
     //TODO: update playlist
+
+    if (!mongoose.Types.ObjectId.isValid(playlistId)) {
+        throw new ApiError(400, "Invalid playlist id")
+    }
+
+    if(!name && !description) {
+        throw new ApiError(400, "Update fields are required")
+    }
+
+    const playlist = await Playlist.findById(playlistId)
+
+    if(!playlist) {
+        throw new ApiError(404, "Playlist not found")
+    }
+
+    if (playlist.owner.toString() !== userId.toString()) {
+        throw new ApiError(403, "You are not allowed to modify this playlist")
+    }
+
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $set: {
+                name,
+                description
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            updatedPlaylist,
+            "Playlist updated successfully"
+        )
+    )
 })
 
 export {
