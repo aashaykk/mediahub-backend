@@ -10,7 +10,7 @@ A production-ready backend API for a social content platform featuring videos, p
 - Centralized error handling
 
 ## Tech Stack
-Node.js, Express.js, MongoDB, Mongoose, JWT, bcrypt
+Node.js, Express.js, MongoDB, Mongoose, JWT, bcrypt, Cloudinary
 
 ## Run Locally
 ```bash
